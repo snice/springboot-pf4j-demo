@@ -94,8 +94,8 @@ public class ExtensionsInjector {
                 String basePackage = ((SpringPlugin) pluginWrapper.getPlugin()).basePackage();
                 ClassPath classPath = ClassPath.from(classLoader);
                 List<ClassPath.ClassInfo> classes = classPath.getTopLevelClassesRecursive(basePackage).stream().filter(it -> it.load().getClassLoader() != getClass().getClassLoader()).collect(Collectors.toList());
-                List<ClassPath.ClassInfo> controllers = classes.stream().filter(it -> isController(it.load())).collect(Collectors.toList());
-                for (ClassPath.ClassInfo c : controllers) {
+                List<ClassPath.ClassInfo> filterClasses = classes.stream().filter(it -> isController(it.load())).collect(Collectors.toList());
+                for (ClassPath.ClassInfo c : filterClasses) {
                     Class<?> extensionClass = c.load();
                     log.debug("unRegister extension '{}' as bean", extensionClass.getName());
                     unregisterExtension(extensionClass);

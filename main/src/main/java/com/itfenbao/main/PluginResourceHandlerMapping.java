@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 
 public class PluginResourceHandlerMapping extends SimpleUrlHandlerMapping {
 
-    private static final String DEFAULT_PATH = "/plugin";
+    private static final String DEFAULT_PATH = "/_plugin/static/";
 
     private final javax.servlet.ServletContext servletContext;
 
@@ -34,7 +34,7 @@ public class PluginResourceHandlerMapping extends SimpleUrlHandlerMapping {
     private void init() {
         setOrder(Ordered.HIGHEST_PRECEDENCE);
         Map<String, ResourceHttpRequestHandler> urlMap = new HashMap<>();
-        urlMap.put(DEFAULT_PATH + "/**", createResourceRequestHandler("/static/", "/templates"));
+        urlMap.put(DEFAULT_PATH + "/**", createResourceRequestHandler("/static/"));
         setUrlMap(urlMap);
     }
 
