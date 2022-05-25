@@ -16,6 +16,7 @@
 package org.pf4j.spring;
 
 import com.google.common.reflect.ClassPath;
+import org.pf4j.Extension;
 import org.pf4j.PluginWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,12 +63,11 @@ public class ExtensionsInjector {
             try {
                 String basePackage = ((SpringPlugin) pluginWrapper.getPlugin()).basePackage();
                 ClassPath classPath = ClassPath.from(classLoader);
-                List<ClassPath.ClassInfo> classes = classPath.getTopLevelClassesRecursive(basePackage).stream().filter(it -> it.load().getClassLoader() != getClass().getClassLoader()).collect(Collectors.toList());
-                List<ClassPath.ClassInfo> controllers = classes.stream().filter(it -> isController(it.load())).collect(Collectors.toList());
-                for (ClassPath.ClassInfo c : controllers) {
-                    Class<?> extensionClass = c.load();
-                    log.debug("Register extension '{}' as bean", extensionClass.getName());
-                    registerExtension(extensionClass, restart);
+                List<Class> classes = classPath.getTopLevelClassesRecursive(basePackage).stream().filter(it -> it.load().getClassLoader() != getClass().getClassLoader()).map(it -> it.load()).collect(Collectors.toList());
+                List<Class> filterClasses = classes.stream().filter(it -> isController(it) || isExtension(it)).collect(Collectors.toList());
+                for (Class c : filterClasses) {
+                    log.debug("Register extension '{}' as bean", c.getName());
+                    registerExtension(c, restart);
                 }
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
@@ -93,12 +93,11 @@ public class ExtensionsInjector {
             try {
                 String basePackage = ((SpringPlugin) pluginWrapper.getPlugin()).basePackage();
                 ClassPath classPath = ClassPath.from(classLoader);
-                List<ClassPath.ClassInfo> classes = classPath.getTopLevelClassesRecursive(basePackage).stream().filter(it -> it.load().getClassLoader() != getClass().getClassLoader()).collect(Collectors.toList());
-                List<ClassPath.ClassInfo> filterClasses = classes.stream().filter(it -> isController(it.load())).collect(Collectors.toList());
-                for (ClassPath.ClassInfo c : filterClasses) {
-                    Class<?> extensionClass = c.load();
-                    log.debug("unRegister extension '{}' as bean", extensionClass.getName());
-                    unregisterExtension(extensionClass);
+                List<Class> classes = classPath.getTopLevelClassesRecursive(basePackage).stream().filter(it -> it.load().getClassLoader() != getClass().getClassLoader()).map(it -> it.load()).collect(Collectors.toList());
+                List<Class> filterClasses = classes.stream().filter(it -> isController(it) || isExtension(it)).collect(Collectors.toList());
+                for (Class c : filterClasses) {
+                    log.debug("unRegister extension '{}' as bean", c.getName());
+                    unregisterExtension(c);
                 }
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
@@ -159,6 +158,10 @@ public class ExtensionsInjector {
 
     private boolean isController(Class<?> extensionClass) {
         return extensionClass.getAnnotation(RestController.class) != null || extensionClass.getAnnotation(Controller.class) != null;
+    }
+
+    private boolean isExtension(Class<?> extensionClass) {
+        return extensionClass.getAnnotation(Extension.class) != null;
     }
 
     /**

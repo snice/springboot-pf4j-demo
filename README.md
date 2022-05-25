@@ -8,6 +8,5 @@ pf4j for spring boot
 - 支持jpa
 - 支持Service
 - 支持static映射
-  
-    
-    /plugin/** ----- *.jar/static/** 
+  <h3>/plugin/** ----- *.jar/static/**</h3>
+- 支持Freemarker

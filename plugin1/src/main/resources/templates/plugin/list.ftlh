@@ -7,5 +7,5 @@
 <body>
 
 </body>
-<h1>list</h1>
+<h1>plugin list</h1>
 </html>

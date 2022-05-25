@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 
 public class PluginResourceHandlerMapping extends SimpleUrlHandlerMapping {
 
-    private static final String DEFAULT_PATH = "/_plugin/static/";
+    private static final String DEFAULT_PATH = "/_plugins/static/";
 
     private final javax.servlet.ServletContext servletContext;
 

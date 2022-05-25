@@ -1,6 +1,7 @@
 package com.itfenbao.main.web;
 
 import org.pf4j.PluginManager;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,6 +13,7 @@ import javax.annotation.Resource;
 public class PluginMgrController {
 
     @Resource
+    @Lazy
     PluginManager pluginManager;
 
     @GetMapping("/stop")
