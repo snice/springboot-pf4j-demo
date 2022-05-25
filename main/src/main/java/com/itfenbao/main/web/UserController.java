@@ -27,4 +27,9 @@ public class UserController {
         return "list";
     }
 
+    @GetMapping("/list1")
+    public String list1(Model model) {
+        return "list1";
+    }
+
 }
