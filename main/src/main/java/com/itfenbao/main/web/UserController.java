@@ -1,5 +1,6 @@
 package com.itfenbao.main.web;
 
+import cn.hutool.core.date.DateUtil;
 import com.itfenbao.main.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -19,7 +20,7 @@ public class UserController {
     @GetMapping({"", "/"})
     public ResponseEntity index() {
         repository.findById(1L);
-        return ResponseEntity.ok("user test");
+        return ResponseEntity.ok("user test" + DateUtil.now());
     }
 
     @GetMapping("/list")

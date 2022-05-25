@@ -71,8 +71,7 @@ public class SpringPluginManager extends DefaultPluginManager implements Applica
     public void init() {
         loadPlugins();
         startPlugins();
-
-        for (String pluginId : getPlugins().stream().map(it -> it.getPluginId()).collect(Collectors.toList())) {
+        for (String pluginId : getPlugins(PluginState.STARTED).stream().map(it -> it.getPluginId()).collect(Collectors.toList())) {
             extensionsInjectorMap.put(pluginId, new ExtensionsInjector(pluginId, this, this.applicationContext));
         }
         extensionsInjectorMap.values().forEach(it -> it.injectExtensions(false));

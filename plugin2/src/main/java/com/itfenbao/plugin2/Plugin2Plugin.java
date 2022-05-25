@@ -17,6 +17,7 @@ public class Plugin2Plugin extends SpringPlugin {
         AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext();
         applicationContext.setClassLoader(getWrapper().getPluginClassLoader());
         applicationContext.setParent(appContext);
+        applicationContext.register(PluginConfiguration.class);
         applicationContext.refresh();
         return applicationContext;
     }

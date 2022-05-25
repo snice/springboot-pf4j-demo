@@ -11,7 +11,7 @@ import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 @Configuration
-@ComponentScan("com.itfenbao.plugin1")
+@ComponentScan
 @EnableJpaRepositories(basePackages = "com.itfenbao.plugin1.repository", entityManagerFactoryRef = "plugin1EntityFactoryBean")
 public class PluginConfiguration {
 
