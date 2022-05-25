@@ -9,7 +9,9 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
+import org.thymeleaf.spring5.SpringTemplateEngine;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 @Configuration
@@ -30,6 +32,13 @@ public class Pf4jPluginConfiguration implements BeanFactoryAware, PluginStateLis
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
         this.beanFactory = beanFactory;
+    }
+
+    @PostConstruct
+    public void pluginInit() {
+        // 支持thymeleaf加载plugin中的模板
+        SpringTemplateEngine engine = beanFactory.getBean(SpringTemplateEngine.class);
+        engine.addTemplateResolver(new PluginThymeleafTemplateResolver(pluginManager));
     }
 
     @PreDestroy
