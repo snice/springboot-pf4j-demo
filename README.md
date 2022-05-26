@@ -2,13 +2,19 @@
 
 pf4j for spring boot 
 
-## 特性
+## 目标
+
+- 热启动
+- 支持第三方lib（仅zip插件）
+
+## 插件已支持特性
 
 - 支持Controller
 - 支持jpa
 - 支持Service
 - 支持static映射
-  <h3>/plugin/** ----- *.jar/static/**</h3>
+
+  <h3>*.jar/static/***  ----->  http://xx/_plugins/static/**  </h3>
 - 支持Freemarker
 - 支持thymeleaf
 
@@ -19,10 +25,7 @@ pf4j for spring boot
 - plugin1 - jar插件
 - plugin2 - zip插件(包含lib)
 
-## 插件特性
-
-- 热启动
-- 支持第三方lib（仅zip插件）
+## 测试
 
 - 停止指定插件
 
