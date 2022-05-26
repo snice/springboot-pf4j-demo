@@ -22,11 +22,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
@@ -157,7 +158,7 @@ public class ExtensionsInjector {
     }
 
     private boolean isController(Class<?> extensionClass) {
-        return extensionClass.getAnnotation(RestController.class) != null || extensionClass.getAnnotation(Controller.class) != null;
+        return AnnotatedElementUtils.hasAnnotation(extensionClass, Controller.class) || AnnotatedElementUtils.hasAnnotation(extensionClass, RequestMapping.class);
     }
 
     private boolean isExtension(Class<?> extensionClass) {

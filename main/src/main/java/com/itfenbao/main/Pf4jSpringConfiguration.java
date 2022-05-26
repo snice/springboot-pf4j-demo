@@ -1,7 +1,5 @@
 package com.itfenbao.main;
 
-import com.jfinal.template.Engine;
-import com.jfinal.template.ext.spring.JFinalViewResolver;
 import org.pf4j.spring.SpringPluginManager;
 import org.pf4j.update.UpdateManager;
 import org.springframework.context.annotation.Bean;
@@ -9,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer;
 
+import javax.servlet.ServletContext;
 import java.net.URI;
 import java.nio.file.Path;
 
@@ -34,6 +33,12 @@ public class Pf4jSpringConfiguration {
         configurer.setPostTemplateLoaders(new PluginFreemarkerTemplateLoader(pluginManager));
         configurer.setDefaultEncoding("UTF-8");
         return configurer;
+    }
+
+    @Bean
+    @DependsOn("pluginManager")
+    public PluginResourceHandlerMapping pluginResourceHandlerMapping(ServletContext servletContext, SpringPluginManager pluginManager) {
+        return new PluginResourceHandlerMapping(servletContext, pluginManager);
     }
 
 //    @Bean
