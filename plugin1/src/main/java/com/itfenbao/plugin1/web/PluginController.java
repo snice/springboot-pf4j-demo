@@ -1,4 +1,4 @@
-package com.itfenbao.plugin1;
+package com.itfenbao.plugin1.web;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;

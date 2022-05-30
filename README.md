@@ -12,6 +12,7 @@ pf4j for spring boot
 - 支持Controller
 - 支持jpa
 - 支持Service
+- 支持Interceptor
 - 支持static映射
 
   <h3>*.jar/static/***  ----->  http://xx/_plugins/static/**  </h3>

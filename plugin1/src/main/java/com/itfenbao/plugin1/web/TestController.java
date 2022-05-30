@@ -1,4 +1,4 @@
-package com.itfenbao.plugin1;
+package com.itfenbao.plugin1.web;
 
 import com.itfenbao.plugin1.repository.TeacherRepository;
 import com.itfenbao.plugin1.service.TestService;

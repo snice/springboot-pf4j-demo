@@ -18,6 +18,7 @@ package org.pf4j.spring;
 import com.google.common.reflect.ClassPath;
 import org.pf4j.Extension;
 import org.pf4j.PluginWrapper;
+import org.pf4j.spring.annotation.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory;
@@ -28,9 +29,12 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.handler.MappedInterceptor;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -70,6 +74,8 @@ public class ExtensionsInjector {
                     log.debug("Register extension '{}' as bean", c.getName());
                     registerExtension(c, restart);
                 }
+                List<Class> interceptorClasses = classes.stream().filter(it -> isHandlerInterceptor(it)).collect(Collectors.toList());
+                handleInterceptor(interceptorClasses, true);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
@@ -100,6 +106,8 @@ public class ExtensionsInjector {
                     log.debug("unRegister extension '{}' as bean", c.getName());
                     unregisterExtension(c);
                 }
+                List<Class> interceptorClasses = classes.stream().filter(it -> isHandlerInterceptor(it)).collect(Collectors.toList());
+                handleInterceptor(interceptorClasses, false);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
@@ -165,6 +173,10 @@ public class ExtensionsInjector {
         return extensionClass.getAnnotation(Extension.class) != null;
     }
 
+    private boolean isHandlerInterceptor(Class<?> extensionClass) {
+        return extensionClass.getAnnotation(Path.class) != null && HandlerInterceptor.class.isAssignableFrom(extensionClass);
+    }
+
     /**
      * 注册controller
      *
@@ -209,6 +221,36 @@ public class ExtensionsInjector {
                 }
             }, ReflectionUtils.USER_DECLARED_METHODS);
         }
+    }
+
+    private void handleInterceptor(List<Class> classList, boolean register) throws InvocationTargetException, NoSuchMethodException, IllegalAccessException {
+        if (classList == null || classList.isEmpty()) return;
+        RequestMappingHandlerMapping handlerMapping = applicationContext.getBean(RequestMappingHandlerMapping.class);
+        Field field = ReflectionUtils.findField(RequestMappingHandlerMapping.class, "adaptedInterceptors");
+        Method method = ReflectionUtils.findMethod(RequestMappingHandlerMapping.class, "adaptInterceptor", Object.class);
+        field.setAccessible(true);
+        method.setAccessible(true);
+        List<HandlerInterceptor> list = (List<HandlerInterceptor>) ReflectionUtils.getField(field, handlerMapping);
+        if (register) {
+            for (Class c : classList) {
+                registerExtension(c, false);
+                Path path = (Path) c.getAnnotation(Path.class);
+                HandlerInterceptor h = (HandlerInterceptor) beanFactory.getBean(c);
+                MappedInterceptor interceptor1 = new MappedInterceptor(path.value(), path.exclude(), h, null);
+                HandlerInterceptor interceptor = (HandlerInterceptor) ReflectionUtils.invokeMethod(method, handlerMapping, interceptor1);
+                list.add(interceptor);
+            }
+        } else {
+            List<MappedInterceptor> mapList = list.stream().filter(it -> it instanceof MappedInterceptor).map(it -> (MappedInterceptor) it).collect(Collectors.toList());
+            for (Class c : classList) {
+                for (MappedInterceptor i : mapList) {
+                    if (i.getInterceptor().getClass() == c) {
+                        list.remove(i);
+                    }
+                }
+            }
+        }
+        ReflectionUtils.setField(field, handlerMapping, list);
     }
 
 }

@@ -14,6 +14,10 @@ import javax.annotation.Resource;
 @RequestMapping(path = "/user")
 public class UserController {
 
+    public UserController() {
+        System.out.println("UserController");
+    }
+
     @Resource
     UserRepository repository;
 
