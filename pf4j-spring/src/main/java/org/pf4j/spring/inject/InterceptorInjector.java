@@ -2,8 +2,9 @@ package org.pf4j.spring.inject;
 
 import org.pf4j.spring.SpringPluginManager;
 import org.pf4j.spring.annotation.Path;
-import org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -16,10 +17,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Lazy
+@Component
 public class InterceptorInjector extends ISpringInjector {
 
-    public InterceptorInjector(SpringPluginManager springPluginManager, ApplicationContext applicationContext, AbstractAutowireCapableBeanFactory beanFactory) {
-        super(springPluginManager, applicationContext, beanFactory);
+    public InterceptorInjector(ApplicationContext applicationContext, SpringPluginManager springPluginManager) {
+        super(applicationContext, springPluginManager);
     }
 
     @Override

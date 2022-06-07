@@ -2,9 +2,10 @@ package org.pf4j.spring.inject;
 
 import org.pf4j.Extension;
 import org.pf4j.spring.SpringPluginManager;
-import org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
@@ -17,11 +18,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+@Lazy
+@Component
 public class DefaultSpringInjector extends ISpringInjector {
 
-
-    public DefaultSpringInjector(SpringPluginManager springPluginManager, ApplicationContext applicationContext, AbstractAutowireCapableBeanFactory beanFactory) {
-        super(springPluginManager, applicationContext, beanFactory);
+    public DefaultSpringInjector(ApplicationContext applicationContext, SpringPluginManager springPluginManager) {
+        super(applicationContext, springPluginManager);
     }
 
     @Override

@@ -17,15 +17,13 @@ package org.pf4j.spring;
 
 import com.google.common.reflect.ClassPath;
 import org.pf4j.PluginWrapper;
-import org.pf4j.spring.inject.DefaultSpringInjector;
 import org.pf4j.spring.inject.ISpringInjector;
-import org.pf4j.spring.inject.InterceptorInjector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory;
 import org.springframework.context.ApplicationContext;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -42,15 +40,13 @@ public class ExtensionsInjector {
     protected final ApplicationContext applicationContext;
     protected final AbstractAutowireCapableBeanFactory beanFactory;
 
-    protected final List<ISpringInjector> springInjectors = new ArrayList<>();
+    protected final Collection<ISpringInjector> springInjectors;
 
     public ExtensionsInjector(SpringPluginManager springPluginManager, ApplicationContext applicationContext) {
         this.springPluginManager = springPluginManager;
         this.applicationContext = applicationContext;
         this.beanFactory = (AbstractAutowireCapableBeanFactory) applicationContext.getAutowireCapableBeanFactory();
-
-        springInjectors.add(new DefaultSpringInjector(springPluginManager, applicationContext, beanFactory));
-        springInjectors.add(new InterceptorInjector(springPluginManager, applicationContext, beanFactory));
+        this.springInjectors = applicationContext.getBeansOfType(ISpringInjector.class).values();
     }
 
     /**

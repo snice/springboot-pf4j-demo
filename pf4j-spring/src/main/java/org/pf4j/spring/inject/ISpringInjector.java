@@ -9,10 +9,10 @@ public abstract class ISpringInjector {
     protected final ApplicationContext applicationContext;
     protected final AbstractAutowireCapableBeanFactory beanFactory;
 
-    public ISpringInjector(SpringPluginManager springPluginManager, ApplicationContext applicationContext, AbstractAutowireCapableBeanFactory beanFactory) {
-        this.springPluginManager = springPluginManager;
+    public ISpringInjector(ApplicationContext applicationContext, SpringPluginManager springPluginManager) {
         this.applicationContext = applicationContext;
-        this.beanFactory = beanFactory;
+        this.springPluginManager = springPluginManager;
+        this.beanFactory = (AbstractAutowireCapableBeanFactory) applicationContext.getAutowireCapableBeanFactory();
     }
 
     public abstract boolean isSupport(Class c);
