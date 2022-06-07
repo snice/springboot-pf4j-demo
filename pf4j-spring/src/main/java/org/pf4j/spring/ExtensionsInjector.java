@@ -16,29 +16,18 @@
 package org.pf4j.spring;
 
 import com.google.common.reflect.ClassPath;
-import org.pf4j.Extension;
 import org.pf4j.PluginWrapper;
-import org.pf4j.spring.annotation.Path;
+import org.pf4j.spring.inject.DefaultSpringInjector;
+import org.pf4j.spring.inject.ISpringInjector;
+import org.pf4j.spring.inject.InterceptorInjector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory;
 import org.springframework.context.ApplicationContext;
-import org.springframework.core.annotation.AnnotatedElementUtils;
-import org.springframework.stereotype.Controller;
-import org.springframework.util.ClassUtils;
-import org.springframework.util.ReflectionUtils;
-import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.servlet.HandlerInterceptor;
-import org.springframework.web.servlet.handler.MappedInterceptor;
-import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -49,208 +38,73 @@ public class ExtensionsInjector {
 
     private static final Logger log = LoggerFactory.getLogger(ExtensionsInjector.class);
 
-    protected final String pluginId;
     protected final SpringPluginManager springPluginManager;
     protected final ApplicationContext applicationContext;
     protected final AbstractAutowireCapableBeanFactory beanFactory;
 
-    public ExtensionsInjector(String pluginId, SpringPluginManager springPluginManager, ApplicationContext applicationContext) {
-        this.pluginId = pluginId;
+    protected final List<ISpringInjector> springInjectors = new ArrayList<>();
+
+    public ExtensionsInjector(SpringPluginManager springPluginManager, ApplicationContext applicationContext) {
         this.springPluginManager = springPluginManager;
         this.applicationContext = applicationContext;
         this.beanFactory = (AbstractAutowireCapableBeanFactory) applicationContext.getAutowireCapableBeanFactory();
+
+        springInjectors.add(new DefaultSpringInjector(springPluginManager, applicationContext, beanFactory));
+        springInjectors.add(new InterceptorInjector(springPluginManager, applicationContext, beanFactory));
     }
 
-    public void injectExtensions(boolean restart) {
-        PluginWrapper pluginWrapper = springPluginManager.getPlugin(this.pluginId);
+    /**
+     * @param pluginId
+     */
+    public void injectExtensions(String pluginId) {
+        PluginWrapper pluginWrapper = springPluginManager.getPlugin(pluginId);
         ClassLoader classLoader = pluginWrapper.getPluginClassLoader();
-        if (pluginWrapper.getPlugin() instanceof SpringPlugin) {
-            try {
+        try {
+            if (pluginWrapper.getPlugin() instanceof SpringPlugin) {
                 String basePackage = ((SpringPlugin) pluginWrapper.getPlugin()).basePackage();
                 ClassPath classPath = ClassPath.from(classLoader);
                 List<Class> classes = classPath.getTopLevelClassesRecursive(basePackage).stream().filter(it -> it.load().getClassLoader() != getClass().getClassLoader()).map(it -> it.load()).collect(Collectors.toList());
-                List<Class> filterClasses = classes.stream().filter(it -> isController(it) || isExtension(it)).collect(Collectors.toList());
-                for (Class c : filterClasses) {
-                    log.debug("Register extension '{}' as bean", c.getName());
-                    registerExtension(c, restart);
+                for (Class c : classes) {
+                    Optional<ISpringInjector> springInjector = springInjectors.stream().filter(it -> it.isSupport(c)).findFirst();
+                    if (springInjector.isPresent()) springInjector.get().register(c);
                 }
-                List<Class> interceptorClasses = classes.stream().filter(it -> isHandlerInterceptor(it)).collect(Collectors.toList());
-                handleInterceptor(interceptorClasses, true);
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        } else {
-            Set<String> extensionClassNames = springPluginManager.getExtensionClassNames(this.pluginId);
-            for (String extensionClassName : extensionClassNames) {
-                try {
+            } else {
+                Set<String> extensionClassNames = springPluginManager.getExtensionClassNames(pluginId);
+                for (String extensionClassName : extensionClassNames) {
                     log.debug("Register extension '{}' as bean", extensionClassName);
-                    Class<?> extensionClass = classLoader.loadClass(extensionClassName);
-                    registerExtension(extensionClass, restart);
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
+                    Class<?> c = classLoader.loadClass(extensionClassName);
+                    Optional<ISpringInjector> springInjector = springInjectors.stream().filter(it -> it.isSupport(c)).findFirst();
+                    if (springInjector.isPresent()) springInjector.get().register(c);
                 }
             }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
     }
 
-    public void uninjectExtensions() {
-        PluginWrapper pluginWrapper = springPluginManager.getPlugin(this.pluginId);
+    public void uninjectExtensions(String pluginId) {
+        PluginWrapper pluginWrapper = springPluginManager.getPlugin(pluginId);
         ClassLoader classLoader = pluginWrapper.getPluginClassLoader();
-        if (pluginWrapper.getPlugin() instanceof SpringPlugin) {
-            try {
+        try {
+            if (pluginWrapper.getPlugin() instanceof SpringPlugin) {
                 String basePackage = ((SpringPlugin) pluginWrapper.getPlugin()).basePackage();
                 ClassPath classPath = ClassPath.from(classLoader);
                 List<Class> classes = classPath.getTopLevelClassesRecursive(basePackage).stream().filter(it -> it.load().getClassLoader() != getClass().getClassLoader()).map(it -> it.load()).collect(Collectors.toList());
-                List<Class> filterClasses = classes.stream().filter(it -> isController(it) || isExtension(it)).collect(Collectors.toList());
-                for (Class c : filterClasses) {
-                    log.debug("unRegister extension '{}' as bean", c.getName());
-                    unregisterExtension(c);
+                for (Class c : classes) {
+                    Optional<ISpringInjector> springInjector = springInjectors.stream().filter(it -> it.isSupport(c)).findFirst();
+                    if (springInjector.isPresent()) springInjector.get().unregister(c);
                 }
-                List<Class> interceptorClasses = classes.stream().filter(it -> isHandlerInterceptor(it)).collect(Collectors.toList());
-                handleInterceptor(interceptorClasses, false);
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        } else {
-            Set<String> extensionClassNames = springPluginManager.getExtensionClassNames(this.pluginId);
-            for (String extensionClassName : extensionClassNames) {
-                try {
-                    log.debug("unRegister extension '{}' as bean", extensionClassName);
-                    Class<?> extensionClass = classLoader.loadClass(extensionClassName);
-                    unregisterExtension(extensionClass);
-                } catch (ClassNotFoundException e) {
-                    log.error(e.getMessage(), e);
+            } else {
+                Set<String> extensionClassNames = springPluginManager.getExtensionClassNames(pluginId);
+                for (String extensionClassName : extensionClassNames) {
+                    Class<?> c = classLoader.loadClass(extensionClassName);
+                    Optional<ISpringInjector> springInjector = springInjectors.stream().filter(it -> it.isSupport(c)).findFirst();
+                    if (springInjector.isPresent()) springInjector.get().unregister(c);
                 }
             }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
-    }
-
-    /**
-     * Register an extension as bean.
-     * Current implementation register extension as singleton using {@code beanFactory.registerSingleton()}.
-     * The extension instance is created using {@code pluginManager.getExtensionFactory().create(extensionClass)}.
-     * The bean name is the extension class name.
-     * Override this method if you wish other register strategy.
-     */
-    protected void registerExtension(Class<?> extensionClass, boolean restart) throws InvocationTargetException, NoSuchMethodException, IllegalAccessException {
-        Map<String, ?> extensionBeanMap = springPluginManager.getApplicationContext().getBeansOfType(extensionClass);
-        if (extensionBeanMap.isEmpty()) {
-            Object extension = springPluginManager.getExtensionFactory().create(extensionClass);
-            String beanName = StringUtils.uncapitalize(extensionClass.getSimpleName());
-            beanFactory.registerSingleton(beanName, extension);
-            if (restart) {
-                if (isController(extensionClass)) {
-                    registerController(extensionClass);
-                }
-            }
-        } else {
-            log.debug("Bean registeration aborted! Extension '{}' already existed as bean!", extensionClass.getName());
-        }
-    }
-
-    protected void unregisterExtension(Class<?> extensionClass) {
-        Map<String, ?> extensionBeanMap = springPluginManager.getApplicationContext().getBeansOfType(extensionClass);
-        if (!extensionBeanMap.isEmpty()) {
-            String beanName = StringUtils.uncapitalize(extensionClass.getSimpleName());
-            if (isController(extensionClass)) {
-                unregisterController(beanName);
-            }
-            try {
-                Method method = beanFactory.getClass().getSuperclass().getDeclaredMethod("removeSingleton", String.class);
-                method.setAccessible(true);
-                method.invoke(beanFactory, beanName);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private boolean isController(Class<?> extensionClass) {
-        return AnnotatedElementUtils.hasAnnotation(extensionClass, Controller.class) || AnnotatedElementUtils.hasAnnotation(extensionClass, RequestMapping.class);
-    }
-
-    private boolean isExtension(Class<?> extensionClass) {
-        return extensionClass.getAnnotation(Extension.class) != null;
-    }
-
-    private boolean isHandlerInterceptor(Class<?> extensionClass) {
-        return extensionClass.getAnnotation(Path.class) != null && HandlerInterceptor.class.isAssignableFrom(extensionClass);
-    }
-
-    /**
-     * 注册controller
-     *
-     * @param extensionClass
-     * @throws NoSuchMethodException
-     * @throws IllegalAccessException
-     * @throws InvocationTargetException
-     */
-    private void registerController(Class<?> extensionClass) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        String beanName = StringUtils.uncapitalize(extensionClass.getSimpleName());
-        final RequestMappingHandlerMapping requestMappingHandlerMapping = applicationContext.getBean(RequestMappingHandlerMapping.class);
-        if (requestMappingHandlerMapping != null) {
-            //注册Controller
-            Method method = requestMappingHandlerMapping.getClass().getSuperclass().getSuperclass().getDeclaredMethod("detectHandlerMethods", Object.class);
-            //将private改为可使用
-            method.setAccessible(true);
-            method.invoke(requestMappingHandlerMapping, beanName);
-        }
-    }
-
-    /**
-     * 卸载controller
-     *
-     * @param beanName
-     */
-    public void unregisterController(String beanName) {
-        final RequestMappingHandlerMapping requestMappingHandlerMapping = applicationContext.getBean(RequestMappingHandlerMapping.class);
-        if (requestMappingHandlerMapping != null) {
-            Object controller = this.applicationContext.getBean(beanName);
-            final Class<?> targetClass = controller.getClass();
-            ReflectionUtils.doWithMethods(targetClass, method -> {
-                Method specificMethod = ClassUtils.getMostSpecificMethod(method, targetClass);
-                try {
-                    Method createMappingMethod = RequestMappingHandlerMapping.class.getDeclaredMethod("getMappingForMethod", Method.class, Class.class);
-                    createMappingMethod.setAccessible(true);
-                    RequestMappingInfo requestMappingInfo = (RequestMappingInfo) createMappingMethod.invoke(requestMappingHandlerMapping, specificMethod, targetClass);
-                    if (requestMappingInfo != null) {
-                        requestMappingHandlerMapping.unregisterMapping(requestMappingInfo);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }, ReflectionUtils.USER_DECLARED_METHODS);
-        }
-    }
-
-    private void handleInterceptor(List<Class> classList, boolean register) throws InvocationTargetException, NoSuchMethodException, IllegalAccessException {
-        if (classList == null || classList.isEmpty()) return;
-        RequestMappingHandlerMapping handlerMapping = applicationContext.getBean(RequestMappingHandlerMapping.class);
-        Field field = ReflectionUtils.findField(RequestMappingHandlerMapping.class, "adaptedInterceptors");
-        Method method = ReflectionUtils.findMethod(RequestMappingHandlerMapping.class, "adaptInterceptor", Object.class);
-        field.setAccessible(true);
-        method.setAccessible(true);
-        List<HandlerInterceptor> list = (List<HandlerInterceptor>) ReflectionUtils.getField(field, handlerMapping);
-        if (register) {
-            for (Class c : classList) {
-                registerExtension(c, false);
-                Path path = (Path) c.getAnnotation(Path.class);
-                HandlerInterceptor h = (HandlerInterceptor) beanFactory.getBean(c);
-                MappedInterceptor interceptor1 = new MappedInterceptor(path.value(), path.exclude(), h, null);
-                HandlerInterceptor interceptor = (HandlerInterceptor) ReflectionUtils.invokeMethod(method, handlerMapping, interceptor1);
-                list.add(interceptor);
-            }
-        } else {
-            List<MappedInterceptor> mapList = list.stream().filter(it -> it instanceof MappedInterceptor).map(it -> (MappedInterceptor) it).collect(Collectors.toList());
-            for (Class c : classList) {
-                for (MappedInterceptor i : mapList) {
-                    if (i.getInterceptor().getClass() == c) {
-                        list.remove(i);
-                    }
-                }
-            }
-        }
-        ReflectionUtils.setField(field, handlerMapping, list);
     }
 
 }

@@ -24,9 +24,7 @@ import org.springframework.context.ApplicationContextAware;
 
 import javax.annotation.PostConstruct;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -36,7 +34,7 @@ public class SpringPluginManager extends DefaultPluginManager implements Applica
 
     private ApplicationContext applicationContext;
 
-    private Map<String, ExtensionsInjector> extensionsInjectorMap = new HashMap<>();
+    private ExtensionsInjector extensionsInjector;
 
     public SpringPluginManager() {
         super();
@@ -71,25 +69,14 @@ public class SpringPluginManager extends DefaultPluginManager implements Applica
     public void init() {
         loadPlugins();
         startPlugins();
+        extensionsInjector = new ExtensionsInjector(this, this.applicationContext);
         for (String pluginId : getPlugins(PluginState.STARTED).stream().map(it -> it.getPluginId()).collect(Collectors.toList())) {
-            extensionsInjectorMap.put(pluginId, new ExtensionsInjector(pluginId, this, this.applicationContext));
+            extensionsInjector.injectExtensions(pluginId);
         }
-        extensionsInjectorMap.values().forEach(it -> it.injectExtensions(false));
-    }
-
-    @Override
-    public String loadPlugin(Path pluginPath) {
-        String pluginId = super.loadPlugin(pluginPath);
-        if (!extensionsInjectorMap.containsKey(pluginId)) {
-            ExtensionsInjector injector = new ExtensionsInjector(pluginId, this, this.applicationContext);
-            extensionsInjectorMap.put(pluginId, injector);
-        }
-        return pluginId;
     }
 
     @Override
     public boolean unloadPlugin(String pluginId) {
-        if (extensionsInjectorMap.containsKey(pluginId)) extensionsInjectorMap.remove(pluginId);
         return super.unloadPlugin(pluginId);
     }
 
@@ -97,14 +84,13 @@ public class SpringPluginManager extends DefaultPluginManager implements Applica
     public PluginState startPlugin(String pluginId) {
         boolean isStarted = getPlugin(pluginId).getPluginState() == PluginState.STARTED;
         PluginState state = super.startPlugin(pluginId);
-        if (!isStarted && extensionsInjectorMap.get(pluginId) != null)
-            extensionsInjectorMap.get(pluginId).injectExtensions(true);
+        if (!isStarted) extensionsInjector.injectExtensions(pluginId);
         return state;
     }
 
     @Override
     public PluginState stopPlugin(String pluginId) {
-        if (extensionsInjectorMap.get(pluginId) != null) extensionsInjectorMap.get(pluginId).uninjectExtensions();
+        extensionsInjector.uninjectExtensions(pluginId);
         return super.stopPlugin(pluginId);
     }
 
