@@ -1,9 +1,9 @@
 package com.itfenbao.main;
 
+import com.github.snice.spring.pf4j.SpringPluginManager;
 import freemarker.cache.URLTemplateLoader;
 import org.pf4j.PluginState;
 import org.pf4j.PluginWrapper;
-import org.pf4j.spring.SpringPluginManager;
 
 import java.net.URL;
 

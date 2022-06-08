@@ -1,8 +1,8 @@
 package com.itfenbao.plugin1;
 
+import com.github.snice.spring.pf4j.SpringPlugin;
+import com.github.snice.spring.pf4j.SpringPluginManager;
 import org.pf4j.PluginWrapper;
-import org.pf4j.spring.SpringPlugin;
-import org.pf4j.spring.SpringPluginManager;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 

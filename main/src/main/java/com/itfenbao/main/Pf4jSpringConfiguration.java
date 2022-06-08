@@ -1,6 +1,6 @@
 package com.itfenbao.main;
 
-import org.pf4j.spring.SpringPluginManager;
+import com.github.snice.spring.pf4j.SpringPluginManager;
 import org.pf4j.update.UpdateManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

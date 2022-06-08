@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
@@ -31,12 +32,12 @@
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
-                <version>1.18.16</version>
+                <version>1.18.24</version>
             </dependency>
             <dependency>
-                <groupId>org.pf4j</groupId>
-                <artifactId>pf4j-spring</artifactId>
-                <version>${pf4j-spring.version}</version>
+                <groupId>com.github.snice</groupId>
+                <artifactId>spring-pf4j</artifactId>
+                <version>0.0.3</version>
             </dependency>
             <dependency>
                 <groupId>org.pf4j</groupId>
@@ -50,9 +51,18 @@
     <modules>
         <module>main</module>
         <module>plugin1</module>
-        <module>pf4j-spring</module>
         <module>plugin2</module>
     </modules>
+
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>

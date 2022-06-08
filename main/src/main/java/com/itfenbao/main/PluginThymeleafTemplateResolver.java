@@ -1,8 +1,8 @@
 package com.itfenbao.main;
 
+import com.github.snice.spring.pf4j.SpringPluginManager;
 import org.pf4j.PluginState;
 import org.pf4j.PluginWrapper;
-import org.pf4j.spring.SpringPluginManager;
 import org.springframework.util.StringUtils;
 import org.thymeleaf.IEngineConfiguration;
 import org.thymeleaf.templateresolver.UrlTemplateResolver;

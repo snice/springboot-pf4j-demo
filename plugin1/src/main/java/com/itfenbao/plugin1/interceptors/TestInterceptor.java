@@ -1,6 +1,6 @@
 package com.itfenbao.plugin1.interceptors;
 
-import org.pf4j.spring.annotation.Path;
+import com.github.snice.spring.pf4j.annotation.Path;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;

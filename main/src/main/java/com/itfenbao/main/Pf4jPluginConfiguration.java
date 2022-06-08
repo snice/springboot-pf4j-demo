@@ -1,8 +1,8 @@
 package com.itfenbao.main;
 
+import com.github.snice.spring.pf4j.SpringPluginManager;
 import org.pf4j.PluginStateEvent;
 import org.pf4j.PluginStateListener;
-import org.pf4j.spring.SpringPluginManager;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
